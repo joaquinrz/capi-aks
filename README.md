@@ -127,15 +127,39 @@ flux install
 flux check
 
 
-# Flux bootstrap
+# Flux bootstrap (set $GITHUB_PAT for the cluster to use)
 flux bootstrap git \
-  --url "https://github.com/${organization}/${repository}" \
-  --branch $BRANCH \
+  --url "https://github.com/joaquinrz/capi-demo" \
+  --branch main \
   --token-auth \
   --password ${GITHUB_PAT} \
   --path "/deploy/management"
 
+# Pull latest changes
+git pull
 ```
+
+## Deploy Clusters using CAPI and Flux
+
+Now that the management cluster has been initialized with CAPI and Flux, let us generate a few cluster crds using our helper script.
+
+```bash
+# This script will invoke clusterctl over an array of cluster names and generate their respective yamls
+scripts/cluster_create.sh
+
+# Deploy the cluster via flux
+git add deploy/management/clusters/
+
+git commit -m 'added worker clusters yaml to management cluster'
+
+git push
+
+flux reconcile source git flux-system && flux reconcile kustomization flux-system
+
+
+```
+
+
 
 
 ### Engineering Docs
