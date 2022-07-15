@@ -26,6 +26,11 @@ curl -L https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.1.5/
 chmod +x ./clusterctl
 sudo mv ./clusterctl /usr/local/bin/clusterctl
 
+# install kustomize
+curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+sudo mv kustomize /usr/local/bin/
+
+
 # only run apt upgrade on pre-build
 if [ "$CODESPACE_NAME" = "null" ]
 then
