@@ -127,7 +127,6 @@ flux install
 # Verify Flux install
 flux check
 
-
 # Flux bootstrap (set $GITHUB_PAT for the cluster to use)
 flux bootstrap git \
   --url "https://github.com/joaquinrz/capi-demo" \
@@ -150,8 +149,24 @@ Now that the management cluster has been initialized with CAPI and Flux, let us 
 export AZURE_CONTROL_PLANE_MACHINE_TYPE="Standard_D2s_v3"
 export AZURE_NODE_MACHINE_TYPE="Standard_D2s_v3"
 
+# Create Clusters Kustomization
+flux create kustomization "clusters" \
+    --source GitRepository/flux-system \
+    --path "/deploy/management/clusters" \
+    --namespace flux-system \
+    --prune true \
+    --interval 1m \
+    --export > deploy/management/bootstrap/clusters-kustomization.yaml
+
+
+git add deploy/management/bootstrap/clusters-kustomization.yaml
+git commit -m "Add clusters kustomization"
+git push
+
 # This script will invoke clusterctl over the cluster names passed as arguments and generate their respective yamls
-scripts/cluster_create.sh cluster-$AZURE_LOCATION-01 cluster-$AZURE_LOCATION-02 cluster-$AZURE_LOCATION-03
+scripts/cluster_create.sh cluster-$AZURE_LOCATION-001 cluster-$AZURE_LOCATION-002 cluster-$AZURE_LOCATION-003
+
+# TODO: Strip Cluster identity manually
 
 # Deploy the cluster via flux
 git add deploy/management/clusters/
@@ -161,17 +176,22 @@ git commit -m 'added worker clusters yaml to management cluster'
 git push
 
 # Force Flux Reconicile
-flux reconcile source git flux-system && flux reconcile kustomization flux-system
+flux reconcile kustomization clusters
 
+
+# Setup each cluster. TODO: Script for this
+export AZURE_CLUSTER_NAME=cluster-southcentralus-002
+
+mkdir -p cluster_kubeconfig
 
 # Generate kubeconfig for cluster
-clusterctl get kubeconfig cluster-southcentralus-01 > cluster-southcentralus-01.kubeconfig
+clusterctl get kubeconfig $AZURE_CLUSTER_NAME > cluster_kubeconfig/$AZURE_CLUSTER_NAME.kubeconfig
 
 # Deploy CNI
-kubectl --kubeconfig=./cluster-southcentral-01.kubeconfig apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api-provider-azure/main/templates/addons/calico.yaml
+kubectl --kubeconfig=cluster_kubeconfig/$AZURE_CLUSTER_NAME.kubeconfig apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api-provider-azure/main/templates/addons/calico.yaml
 
 # Check cluster nodes
-kubectl --kubeconfig=./cluster-southcentral-01.kubeconfig get nodes
+kubectl --kubeconfig=cluster_kubeconfig/$AZURE_CLUSTER_NAME.kubeconfig get nodes
 
 
 ```
