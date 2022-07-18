@@ -14,4 +14,4 @@ for clusterName in "${clusterNames[@]}" ; do
     echo "$clusterName"
 done
 
-echo "\n All Done."
+echo "All Done."
