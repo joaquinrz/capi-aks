@@ -57,19 +57,20 @@ We will need to create a management aks cluster in Azure that will manage the li
 ```bash
 # Set the name of your new resource group.
 export AZURE_RG_NAME=capi-demo
-export AZURE_RG_LOCATION=southcentralus
+export AZURE_LOCATION=southcentralus
+
 
 # Make sure the resource group name is already taken
-az group list -o table | grep $AZURE_RG_NAME
+az group list -o table | grep $AZURE_LOCATION
 
 # Create new resource group
-az group create -n $AZURE_RG_NAME -l $AZURE_RG_LOCATION
+az group create -n $AZURE_LOCATION -l $AZURE_RG_LOCATION
 
 # Create AKS Cluster (this will take a 5-10 mins)
-az aks create -g $AZURE_RG_NAME -n capi-management --node-count 1 --generate-ssh-keys
+az aks create -g $AZURE_LOCATION -n capi-management --node-count 1 --generate-ssh-keys
 
 # Connect to the management cluster
-az aks get-credentials --resource-group $AZURE_RG_NAME --name capi-management
+az aks get-credentials --resource-group $AZURE_LOCATION --name capi-management
 
 # Verify AKS node is ready
 k get nodes
@@ -133,7 +134,7 @@ flux bootstrap git \
   --branch main \
   --token-auth \
   --password ${GITHUB_PAT} \
-  --path "/deploy/management"
+  --path "/deploy/management/bootstrap"
 
 # Pull latest changes
 git pull
@@ -144,8 +145,13 @@ git pull
 Now that the management cluster has been initialized with CAPI and Flux, let us generate a few cluster crds using our helper script.
 
 ```bash
-# This script will invoke clusterctl over an array of cluster names and generate their respective yamls
-scripts/cluster_create.sh
+
+# Set machine specifications
+export AZURE_CONTROL_PLANE_MACHINE_TYPE="Standard_D2s_v3"
+export AZURE_NODE_MACHINE_TYPE="Standard_D2s_v3"
+
+# This script will invoke clusterctl over the cluster names passed as arguments and generate their respective yamls
+scripts/cluster_create.sh cluster-$AZURE_LOCATION-01 cluster-$AZURE_LOCATION-02 cluster-$AZURE_LOCATION-03
 
 # Deploy the cluster via flux
 git add deploy/management/clusters/
@@ -154,13 +160,21 @@ git commit -m 'added worker clusters yaml to management cluster'
 
 git push
 
+# Force Flux Reconicile
 flux reconcile source git flux-system && flux reconcile kustomization flux-system
 
 
+# Generate kubeconfig for cluster
+clusterctl get kubeconfig cluster-southcentralus-01 > cluster-southcentralus-01.kubeconfig
+
+# Deploy CNI
+kubectl --kubeconfig=./cluster-southcentral-01.kubeconfig apply -f https://raw.githubusercontent.com/kubernetes-sigs/cluster-api-provider-azure/main/templates/addons/calico.yaml
+
+# Check cluster nodes
+kubectl --kubeconfig=./cluster-southcentral-01.kubeconfig get nodes
+
+
 ```
-
-
-
 
 ### Engineering Docs
 

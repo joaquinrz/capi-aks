@@ -1,5 +1,5 @@
 #!/bin/bash
-clusterNames=("worker1" "worker2" "worker3" "worker4" "worker5")
+clusterNames=("$@")
 echo "Generating YAML to create ${#clusterNames[@]}" clusters
 
 mkdir -p deploy/management/clusters
