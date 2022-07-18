@@ -1,6 +1,6 @@
-# Cluster API + Azure + Flux Demo
+# Cluster API + Azure + Flux Deployment
 
-> Setup a Kubernetes fleet using Cluster API and Azure
+> Setup a Kubernetes multi-cluster fleet using Cluster API and Azure
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
