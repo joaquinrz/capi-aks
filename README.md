@@ -64,13 +64,13 @@ export AZURE_LOCATION=southcentralus
 az group list -o table | grep $AZURE_LOCATION
 
 # Create new resource group
-az group create -n $AZURE_LOCATION -l $AZURE_RG_LOCATION
+az group create -n $AZURE_RG_NAME -l $AZURE_LOCATION
 
 # Create AKS Cluster (this will take a 5-10 mins)
-az aks create -g $AZURE_LOCATION -n capi-management --node-count 1 --generate-ssh-keys
+az aks create -g $AZURE_RG_NAME -n capi-management --node-count 1 --generate-ssh-keys
 
 # Connect to the management cluster
-az aks get-credentials --resource-group $AZURE_LOCATION --name capi-management
+az aks get-credentials --resource-group $AZURE_RG_NAME --name capi-management
 
 # Verify AKS node is ready
 k get nodes
