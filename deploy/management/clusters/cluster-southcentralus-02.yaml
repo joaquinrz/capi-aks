@@ -209,19 +209,3 @@ spec:
             cloud-provider: azure
           name: '{{ ds.meta_data["local_hostname"] }}'
       preKubeadmCommands: []
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: AzureClusterIdentity
-metadata:
-  labels:
-    clusterctl.cluster.x-k8s.io/move-hierarchy: "true"
-  name: cluster-identity
-  namespace: default
-spec:
-  allowedNamespaces: {}
-  clientID: 6395ca97-a7fc-469b-98d3-95f5b5bdadbb
-  clientSecret:
-    name: cluster-identity-secret
-    namespace: default
-  tenantID: 72f988bf-86f1-41af-91ab-2d7cd011db47
-  type: ServicePrincipal
