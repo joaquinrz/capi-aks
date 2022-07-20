@@ -15,5 +15,5 @@ spec:
   values:
     name: joaquin03-aks
     clusterResourceGroup: joaquin-cluster-03
-    controlAgentPoolName: claspooljoaquinCluster03
-    workerAgentPoolName: wraspooljoaquinCluster03
+    controlAgentPoolName: claspooljoaquin3
+    workerAgentPoolName: wraspooljoaquin3
