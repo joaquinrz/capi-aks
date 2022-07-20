@@ -1,0 +1,22 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: joaquin05-aks-helm-release
+  namespace: default
+spec:
+  chart:
+    spec:
+      chart: ./capi/charts/aks
+      sourceRef:
+        kind: GitRepository
+        name: flux-system
+        namespace: flux-system
+  interval: 5m
+  values:
+    name: westus3-joaquin05-aks
+    clusterResourceGroup: capi-demo-clusters
+    controlAgentPoolName: cajoaquin05
+    workerAgentPoolName:  wajoaquin05
+    location: westus3
+    virtualNetwork:
+      name: joaquin05-vnet
