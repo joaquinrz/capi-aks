@@ -1,7 +1,7 @@
-name: joaquin-cluster-01
+name:
 servicesCidrBlock: 10.0.0.0/16
 location: southcentralus
-clusterResourceGroup: joaquin-cluster-01
+clusterResourceGroup:
 subscriptionId: 5ba21429-9937-467b-93ac-9253584354cf
 k8sVersion: v1.22.6
 networkPlugin: kubenet
