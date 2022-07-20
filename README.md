@@ -85,8 +85,10 @@ k get nodes
 
 ```bash
 
-# Enable support for managed topologies and ClusterClass
+# Enable support for managed topologies and experimental features
 export CLUSTER_TOPOLOGY=true
+export EXP_AKS=true
+export EXP_MACHINE_POOL=true
 
 # TODO: Create Service principal via CLI
 
@@ -180,7 +182,7 @@ flux reconcile kustomization clusters
 
 
 # Setup each cluster. TODO: Script for this
-export AZURE_CLUSTER_NAME=cluster-southcentralus-002
+export AZURE_CLUSTER_NAME=cluster-southcentralus-001
 
 mkdir -p cluster_kubeconfig
 
