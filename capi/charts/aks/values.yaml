@@ -1,0 +1,18 @@
+name: joaquin-cluster-01
+servicesCidrBlock: 10.0.0.0/16
+location: southcentralus
+clusterResourceGroup: joaquin-cluster-01
+subscriptionId: 5ba21429-9937-467b-93ac-9253584354cf
+k8sVersion: v1.22.6
+networkPlugin: kubenet
+networkPolicy: calico
+controlAgentPoolName: clagentpool
+controlAgentPoolNodes: 2
+controlAgentPoolNodeSize: Standard_D2s_v3
+controlAgentDiskSizeGB: 30
+workerAgentPoolName: wragentpool
+workerAgentPoolNodes: 1
+workerAgentPoolNodeSize: Standard_D2s_v3
+workerAgentDiskSizeGB: 40
+virtualNetwork:
+  name: secure-vnet
