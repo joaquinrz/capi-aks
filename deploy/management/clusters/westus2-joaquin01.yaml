@@ -15,8 +15,8 @@ spec:
   values:
     name: westus2-joaquin01-aks
     clusterResourceGroup: capi-demo-clusters
-    controlAgentPoolName: claspooljoaquin
-    workerAgentPoolName: wraspooljoaquin
+    controlAgentPoolName: cpool01
+    workerAgentPoolName:  wpool02
     location: westus2
     virtualNetwork:
       name: joaquin01-vnet
