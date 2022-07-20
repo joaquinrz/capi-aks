@@ -8,7 +8,6 @@ spec:
     services:
       cidrBlocks:
       - {{ .Values.servicesCidrBlock }}
-    serviceDomain: cluster.local
   controlPlaneRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: AzureManagedControlPlane
@@ -26,11 +25,12 @@ kind: AzureManagedControlPlane
 metadata:
   name: {{ .Values.name }}
 spec:
-  defaultPoolRef:
-    name: {{ .Values.controlAgentPoolName }}
+  identityRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: AzureClusterIdentity
+    name: cluster-identity
   location: {{ .Values.location }}
   resourceGroupName: {{ .Values.clusterResourceGroup }}
-  nodeResourceGroupName: nodepool-{{ .Values.clusterResourceGroup }}
   sshPublicKey: ""
   subscriptionID: {{ .Values.subscriptionId }}
   version: {{ .Values.k8sVersion }}
