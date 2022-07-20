@@ -2,7 +2,7 @@ apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   name: joaquin04-aks-helm-release
-  namespace: cluster-joaquin04
+  namespace: default
 spec:
   chart:
     spec:
@@ -15,5 +15,5 @@ spec:
   values:
     name: joaquin04-aks
     clusterResourceGroup: joaquin-cluster-04
-    controlAgentPoolName: claspool
-    workerAgentPoolName: wraspool
+    controlAgentPoolName: claspoolfour
+    workerAgentPoolName: wraspoolfour
