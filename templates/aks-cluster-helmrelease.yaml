@@ -14,6 +14,7 @@ spec:
   interval: 5m
   values:
     name: $CLUSTER_LOCATION-$CLUSTER_NAME-aks
+    subscriptionId: $AZURE_SUBSCRIPTION_ID
     clusterResourceGroup: capi-aks-clusters
     controlAgentPoolName: ca$CLUSTER_NAME
     workerAgentPoolName:  wa$CLUSTER_NAME
