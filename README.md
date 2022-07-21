@@ -44,7 +44,7 @@ The following is a sample implementation using Codespaces for setting up an Azur
 Log in to the Azure subscription used to deploy the management cluster.
 
 ```bash
-export AZURE_SUBSCRIPTION_ID_B64=NWJhMjE0MjktOTkzNy00NjdiLTkzYWMtOTI1MzU4NDM1NGNm
+export AZURE_SUBSCRIPTION_ID=<yourSubscriptionId>
 az login --use-device-code
 az account set --subscription $AZURE_SUBSCRIPTION_ID
 ```
@@ -149,7 +149,7 @@ flux reconcile source git flux-system
 flux reconcile kustomization flux-system
 ```
 
-## Deploy Worker cluster using Cluster API and Flux v2
+## Deploy worker cluster using Cluster API and Flux v2
 
 Now that the management cluster has been initialized with CAPI and Flux, let us generate a few cluster crds using our helper script.
 
