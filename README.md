@@ -1,16 +1,16 @@
 # AKS Multi-Cluster Fleet using Cluster API + Flux
 
-> Setup a Kubernetes multi-cluster fleet using Cluster API and Azure
+> Setup a Kubernetes Multi-cluster fleet using Cluster API and Azure
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 ## Overview
 
-This is a sample implementation in Codespaces for setting up an Azure Kuberenetes Service (AKS) multi-cluster fleet using Cluster API and Flux. This setup is intended for learning and development purposes and is not production-ready.
+This is a sample implementation using Codespaces for setting up an Azure Kuberenetes Service (AKS) multi-cluster fleet using Cluster API and Flux. This setup is intended for learning and development purposes and is not production-ready.
 
 ## Open with Codespaces
 
-> To use Yyou must have Codespaces enabled in your current organization and/or be a member of the Microsoft OSS.
+> To use you must have Codespaces enabled in your current organization.
 
 - Click the `Code` button on this repo
 - Click the `Codespaces` tab
@@ -49,13 +49,13 @@ az login --use-device-code
 az account set --subscription $AZURE_SUBSCRIPTION_ID
 ```
 
-## Create Management Cluster
+## Create AKS Cluster
 
-To get started, you will need to create an AKS cluster that will manage the lifecycle of all our fleet clusters. The following instructions will guide you on how to create a vanilla AKS cluster and then how to configure it to become Cluster API's management cluster.
+To get started, you will need to create an AKS cluster that will manage the lifecycle of all your fleet clusters. The following instructions will guide you on how to create a vanilla AKS cluster.
 
 ```bash
 # Set the name of your new resource group in Azure.
-export AZURE_RG_NAME=capi-demo
+export AZURE_RG_NAME=capi-aks
 export AZURE_LOCATION=southcentralus
 
 # Make sure the resource group name is not already taken
@@ -64,14 +64,14 @@ az group list -o table | grep $AZURE_LOCATION
 # Create the new resource group
 az group create -n $AZURE_RG_NAME -l $AZURE_LOCATION
 
-# Create AKS Cluster (this will take a 5-10 mins)
+# Create AKS Cluster (this will take about 5-10 mins)
 az aks create -g $AZURE_RG_NAME -n capi-management --node-count 1 --generate-ssh-keys
 
 # Connect to the management cluster
 az aks get-credentials --resource-group $AZURE_RG_NAME --name capi-management
 
 # Verify AKS node is ready
-k get nodes
+kubectl get nodes
 
 # You should be able to see the nodepool to be in Ready state
 
@@ -81,6 +81,8 @@ k get nodes
 
 ## Initialize the Management Cluster with Cluster API
 
+Now that the AKS cluster has been created, it will be bootstrapped with Cluster API to become the management cluster. The management cluster allows you to control and maintain the fleet of worker clusters.
+
 ```bash
 
 # Enable support for managed topologies and experimental features
@@ -89,7 +91,7 @@ export EXP_AKS=true
 export EXP_MACHINE_POOL=true
 
 # Create an Azure Service Principal in Azure portal. (Note: make sure this SP has access to the resource group)
-# TODO: Automate the service principal creation using the Azure cli
+# TODO: Automate the service principal creation using the Azure CLI
 
 export AZURE_TENANT_ID="<Tenant>"
 export AZURE_CLIENT_ID="<AppId>"
@@ -113,7 +115,7 @@ kubectl create secret generic "${AZURE_CLUSTER_IDENTITY_SECRET_NAME}" --from-lit
 # Initialize the management cluster for azure
 clusterctl init --infrastructure azure
 
-# Create AzureClusterIdentity
+# Create and apply an AzureClusterIdentity
 envsubst < templates/aks-cluster-identity.yaml | kubectl apply -f -
 
 ```
@@ -129,16 +131,24 @@ flux install
 # Verify Flux install
 flux check
 
+export GIT_PAT=<yourGitPat>
+
 # Flux bootstrap (set $GITHUB_PAT for the cluster to use)
 flux bootstrap git \
   --url "https://github.com/joaquinrz/capi-demo" \
   --branch main \
   --token-auth \
-  --password ${GITHUB_PAT} \
+  --password ${GIT_PAT} \
   --path "/deploy/management/bootstrap"
 
 # Pull latest changes
 git pull
+
+# Force Flux reconcile
+flux reconcile source git flux-system
+
+flux reconcile kustomization flux-system
+
 ```
 
 ## Deploy Clusters using CAPI and Flux
@@ -149,36 +159,47 @@ Now that the management cluster has been initialized with CAPI and Flux, let us 
 
 # This script will generate a new HelmRelease file that provides Flux the Helm chart information and the values it needs for a succesful deployment
 
-./scripts/cluster_create.sh -n <cluster_name> -l <cluster_location>
+export CLUSTER_PREFIX=cluster001
+export CLUSTER_LOCATION=southcentralus
 
-
-# Create Clusters Kustomization
-flux create kustomization "clusters" \
-    --source GitRepository/flux-system \
-    --path "/deploy/management/clusters" \
-    --namespace flux-system \
-    --prune true \
-    --interval 1m \
-    --export > deploy/management/bootstrap/clusters-kustomization.yaml
-
-git add deploy/management/bootstrap/clusters-kustomization.yaml
-git commit -m "Add clusters kustomization"
-git push
-
-# Force Flux Reconicile to avoid waiting
-flux reconcile kustomization flux-system
-flux reconcile kustomization clusters
+./scripts/cluster_create.sh -n $CLUSTER_NAME -l $CLUSTER_LOCATION
 
 # Note: it takes about 5 minutes for the cluster to be provisioned, you may check the status of the deployment by running
 kubectl get clusters
 
+export CLUSTER_NAME=$CLUSTER_LOCATION-$CLUSTER_PREFIX-aks
+# Shows a hierachical view of dependencies
+clusterctl describe cluster <clusternName>
 
-# TODO kubeconfig
-# Check cluster nodes
-#kubectl --kubeconfig=cluster_kubeconfig/$AZURE_CLUSTER_NAME.kubeconfig get nodes
+# Generate kubeconfig for cluster
+clusterctl get kubeconfig $CLUSTER_NAME  > kubeconfig/$CLUSTER_NAME.kubeconfig
 
+# Check worker cluster nodes
+kubectl --kubeconfig=kubeconfig/$CLUSTER_NAME.kubeconfig get nodes
 
 ```
+
+## Deleting a worker cluster
+
+Removing a worker cluster is as simple as deleting the cluster HelmRelease file under deploy/clusters and apply a flux reconcile
+
+```bash
+rm deploy/management/clusters/<clusterName>.yaml
+
+git add deploy/management/clusters/<clusterName>.yaml
+
+git commit -m 'Removed cluster'
+
+git push
+
+flux reconcile kustomization flux-system --with-source
+
+flux reconcile kustomization clusters
+
+kubectl get clusters # You will see now that the cluster is being deleted
+
+```
+
 
 ### Engineering Docs
 
