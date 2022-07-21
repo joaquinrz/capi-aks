@@ -14,7 +14,7 @@ spec:
   interval: 5m
   values:
     name: $CLUSTER_LOCATION-$CLUSTER_NAME-aks
-    clusterResourceGroup: capi-demo-clusters
+    clusterResourceGroup: capi-aks-clusters
     controlAgentPoolName: ca$CLUSTER_NAME
     workerAgentPoolName:  wa$CLUSTER_NAME
     location: $CLUSTER_LOCATION

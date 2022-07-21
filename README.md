@@ -135,7 +135,7 @@ export GIT_PAT=<yourGitPat>
 
 # Flux bootstrap (set $GITHUB_PAT for the cluster to use)
 flux bootstrap git \
-  --url "https://github.com/joaquinrz/capi-demo" \
+  --url "https://github.com/joaquinrz/capi-aks" \
   --branch main \
   --token-auth \
   --password ${GIT_PAT} \
