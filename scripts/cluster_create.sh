@@ -44,7 +44,8 @@ git commit -m "Added cluster $CLUSTER_NAME"
 git push
 
 echo "Flux Reconcile..."
-flux reconcile kustomization flux-system
+
+flux reconcile kustomization flux-system --with-source
 sleep 5
 flux reconcile kustomization clusters
 
