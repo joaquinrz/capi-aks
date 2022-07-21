@@ -6,7 +6,7 @@
 
 ## Overview
 
-This is a sample implementation using Codespaces for setting up an Azure Kuberenetes Service (AKS) multi-cluster fleet using Cluster API and Flux. This setup is intended for learning and development purposes and is not production-ready.
+The following is a sample implementation using Codespaces for setting up an Azure Kubernetes Service (AKS) multi-cluster fleet using Cluster API and Flux. This setup is intended for learning and development purposes and is not production-ready.
 
 ## Open with Codespaces
 
@@ -39,35 +39,35 @@ This is a sample implementation using Codespaces for setting up an Azure Kuberen
   - Please delete your Codespace once you complete the lab
     - Creating a new Codespace only takes about 45 seconds!
 
-## Login to Azure
+## Azure login
 
-Login to the Azure subscription in which you will be deploying the management cluster.
+Log in to the Azure subscription used to deploy the management cluster.
 
 ```bash
-export AZURE_SUBSCRIPTION_ID=<yourSubscriptionId>
+export AZURE_SUBSCRIPTION_ID_B64=NWJhMjE0MjktOTkzNy00NjdiLTkzYWMtOTI1MzU4NDM1NGNm
 az login --use-device-code
 az account set --subscription $AZURE_SUBSCRIPTION_ID
 ```
 
-## Create AKS Cluster
+## Create the Azure Kubernetes Service (AKS) Cluster
 
-To get started, you will need to create an AKS cluster that will manage the lifecycle of all your fleet clusters. The following instructions will guide you on how to create a vanilla AKS cluster.
+To get started, you will need to create an AKS cluster that will manage the lifecycle of all your fleet clusters. The following instructions will guide you on how to deploy the AKS cluster.
 
 ```bash
 # Set the name of your new resource group in Azure.
 export AZURE_RG_NAME=capi-aks
 export AZURE_LOCATION=southcentralus
 
-# Make sure the resource group name is not already taken
+# Check if the resource group name is not already in use
 az group list -o table | grep $AZURE_LOCATION
 
 # Create the new resource group
 az group create -n $AZURE_RG_NAME -l $AZURE_LOCATION
 
-# Create AKS Cluster (this will take about 5-10 mins)
+# Create the AKS Cluster (this will take around 5 to 10 minutes)
 az aks create -g $AZURE_RG_NAME -n capi-management --node-count 1 --generate-ssh-keys
 
-# Connect to the management cluster
+# Connect to the AKS cluster
 az aks get-credentials --resource-group $AZURE_RG_NAME --name capi-management
 
 # Verify AKS node is ready
@@ -81,7 +81,7 @@ kubectl get nodes
 
 ## Initialize the Management Cluster with Cluster API
 
-Now that the AKS cluster has been created, it will be bootstrapped with Cluster API to become the management cluster. The management cluster allows you to control and maintain the fleet of worker clusters.
+Now that the AKS cluster is created, it will be initialized with Cluster API to become the management cluster. The management cluster allows you to control and maintain the fleet of worker clusters
 
 ```bash
 
@@ -90,7 +90,7 @@ export CLUSTER_TOPOLOGY=true
 export EXP_AKS=true
 export EXP_MACHINE_POOL=true
 
-# Create an Azure Service Principal in Azure portal. (Note: make sure this SP has access to the resource group)
+# Create an Azure Service Principal in the Azure portal. (Note: Make sure this Service Principal has access to the resource group)
 # TODO: Automate the service principal creation using the Azure CLI
 
 export AZURE_TENANT_ID="<Tenant>"
@@ -117,7 +117,6 @@ clusterctl init --infrastructure azure
 
 # Create and apply an AzureClusterIdentity
 envsubst < templates/aks-cluster-identity.yaml | kubectl apply -f -
-
 ```
 
 ## Install and Configure Flux in the Management Cluster
@@ -148,40 +147,38 @@ git pull
 flux reconcile source git flux-system
 
 flux reconcile kustomization flux-system
-
 ```
 
-## Deploy Clusters using CAPI and Flux
+## Deploy Worker cluster using Cluster API and Flux v2
 
 Now that the management cluster has been initialized with CAPI and Flux, let us generate a few cluster crds using our helper script.
 
 ```bash
-
-# This script will generate a new HelmRelease file that provides Flux the Helm chart information and the values it needs for a succesful deployment
-
-export CLUSTER_PREFIX=cluster001
+# Set Cluster prefix and location
+export CLUSTER_PREFIX=cluster01
 export CLUSTER_LOCATION=southcentralus
 
-./scripts/cluster_create.sh -n $CLUSTER_NAME -l $CLUSTER_LOCATION
+# This script will generate a new HelmRelease file under deploy/management/clusters. This file will then be reconciled by Flux and deploy a new worker cluster.
+./scripts/cluster_create.sh -n $CLUSTER_PREFIX -l $CLUSTER_LOCATION
 
-# Note: it takes about 5 minutes for the cluster to be provisioned, you may check the status of the deployment by running
+# Note: It takes about 6 minutes for the cluster to be provisioned, you may check the status of the deployment by running
 kubectl get clusters
 
 export CLUSTER_NAME=$CLUSTER_LOCATION-$CLUSTER_PREFIX-aks
+
 # Shows a hierachical view of dependencies
-clusterctl describe cluster <clusternName>
+clusterctl describe cluster $CLUSTER_NAME
 
 # Generate kubeconfig for cluster
 clusterctl get kubeconfig $CLUSTER_NAME  > kubeconfig/$CLUSTER_NAME.kubeconfig
 
 # Check worker cluster nodes
 kubectl --kubeconfig=kubeconfig/$CLUSTER_NAME.kubeconfig get nodes
-
 ```
 
 ## Deleting a worker cluster
 
-Removing a worker cluster is as simple as deleting the cluster HelmRelease file under deploy/clusters and apply a flux reconcile
+Removing a worker cluster is as simple as deleting the cluster HelmRelease file under deploy/management/clusters and applying a flux reconcile
 
 ```bash
 rm deploy/management/clusters/<clusterName>.yaml
@@ -197,7 +194,6 @@ flux reconcile kustomization flux-system --with-source
 flux reconcile kustomization clusters
 
 kubectl get clusters # You will see now that the cluster is being deleted
-
 ```
 
 
