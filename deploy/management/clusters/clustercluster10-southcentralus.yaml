@@ -1,7 +1,7 @@
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
-  name: cluster03-aks-helm-release
+  name: cluster10-aks-helm-release
   namespace: default
 spec:
   chart:
@@ -13,12 +13,12 @@ spec:
         namespace: flux-system
   interval: 5m
   values:
-    name: southcentralus-cluster03-aks
+    name: southcentralus-cluster10-aks
     clusterResourceGroup: capi-aks-clusters
-    controlAgentPoolName: cacluster03
-    workerAgentPoolName:  wacluster03
+    controlAgentPoolName: cacluster10
+    workerAgentPoolName:  wacluster10
     networkPlugin: none
     networkPolicy: none
     location: southcentralus
     virtualNetwork:
-      name: cluster03-vnet
+      name: cluster10-vnet
