@@ -17,8 +17,8 @@ spec:
     clusterResourceGroup: capi-aks-clusters
     controlAgentPoolName: cacluster10
     workerAgentPoolName:  wacluster10
-    networkPlugin: none
-    networkPolicy: none
+    networkPlugin:
+    networkPolicy:
     location: southcentralus
     virtualNetwork:
       name: cluster10-vnet
