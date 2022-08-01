@@ -21,3 +21,5 @@ spec:
     location: southcentralus
     virtualNetwork:
       name: cluster01-vnet
+    networkPlugin: azure
+    networkPolicy: azure
