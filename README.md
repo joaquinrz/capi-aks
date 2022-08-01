@@ -152,8 +152,8 @@ git pull
 # Create kustomization for clusters
 flux create kustomization "clusters" \
     --source GitRepository/flux-system \
-    --path "/deploy/management/clusters" \
-    --namespace default \
+    --path "/deploy/clusters" \
+    --namespace flux-system \
     --prune true \
     --interval 1m \
     --export > deploy/management/bootstrap/clusters-kustomization.yaml
