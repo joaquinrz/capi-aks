@@ -133,13 +133,14 @@ flux check
 # For flux to work, you will need to create a personal access token (PAT) that has repo read access
 export GIT_PAT=<yourGitPat>
 export GIT_BRANCH=`git config user.name | sed 's/ //g'`$RANDOM
+export GIT_REPO=`git config remote.origin.url`
 
 git checkout -b $GIT_BRANCH
 git push --set-upstream origin $GIT_BRANCH
 
 # Flux bootstrap (set $GITHUB_PAT for the cluster to use)
 flux bootstrap git \
-  --url "https://github.com/joaquinrz/capi-aks" \
+  --url ${GIT_REPO}\
   --branch ${GIT_BRANCH} \
   --token-auth \
   --password ${GIT_PAT} \
