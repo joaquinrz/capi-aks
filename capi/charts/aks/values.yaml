@@ -4,8 +4,8 @@ location: southcentralus
 clusterResourceGroup:
 subscriptionId:
 k8sVersion: v1.22.6
-networkPlugin: kubenet
-networkPolicy: calico
+networkPlugin: none
+networkPolicy: azure
 controlAgentPoolName: clagentpool
 controlAgentPoolNodes: 2
 controlAgentPoolNodeSize: Standard_D2s_v3

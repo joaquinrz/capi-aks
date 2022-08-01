@@ -59,7 +59,7 @@ export AZURE_RG_NAME=capi-aks
 export AZURE_LOCATION=southcentralus
 
 # Check if the resource group name is not already in use
-az group list -o table | grep $AZURE_LOCATION
+az group list -o table | grep $AZURE_RG_NAME
 
 # Create the new resource group
 az group create -n $AZURE_RG_NAME -l $AZURE_LOCATION
@@ -130,12 +130,17 @@ flux install
 # Verify Flux install
 flux check
 
+# For flux to work, you will need to create a personal access token (PAT) that has repo read access
 export GIT_PAT=<yourGitPat>
+export GIT_BRANCH=`git config user.name | sed 's/ //g'`$RANDOM
+
+git checkout -b $BRANCH
+git push --set-upstream origin $BRANCH
 
 # Flux bootstrap (set $GITHUB_PAT for the cluster to use)
 flux bootstrap git \
   --url "https://github.com/joaquinrz/capi-aks" \
-  --branch main \
+  --branch ${GIT_BRANCH} \
   --token-auth \
   --password ${GIT_PAT} \
   --path "/deploy/management/bootstrap"
@@ -195,7 +200,6 @@ flux reconcile kustomization clusters
 
 kubectl get clusters # You will see now that the cluster is being deleted
 ```
-
 
 ### Engineering Docs
 
