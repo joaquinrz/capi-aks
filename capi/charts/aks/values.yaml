@@ -4,7 +4,7 @@ location: southcentralus
 clusterResourceGroup:
 subscriptionId:
 k8sVersion: v1.22.6
-networkPlugin: none
+networkPlugin: azure
 networkPolicy: azure
 controlAgentPoolName: clagentpool
 controlAgentPoolNodes: 2
