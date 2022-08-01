@@ -149,6 +149,7 @@ flux bootstrap git \
 # Pull latest changes
 git pull
 
+# Create kustomization for clusters
 flux create kustomization "clusters" \
     --source GitRepository/flux-system \
     --path "/deploy/management/clusters" \
@@ -159,7 +160,7 @@ flux create kustomization "clusters" \
 
 git add deploy/management/bootstrap/clusters-kustomization.yaml
 git commit -m 'Added clusters kustomization'
-git pull
+git push
 
 # Force Flux reconcile
 flux reconcile source git flux-system
