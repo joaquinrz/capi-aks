@@ -134,8 +134,8 @@ flux check
 export GIT_PAT=<yourGitPat>
 export GIT_BRANCH=`git config user.name | sed 's/ //g'`$RANDOM
 
-git checkout -b $BRANCH
-git push --set-upstream origin $BRANCH
+git checkout -b $GIT_BRANCH
+git push --set-upstream origin $GIT_BRANCH
 
 # Flux bootstrap (set $GITHUB_PAT for the cluster to use)
 flux bootstrap git \
