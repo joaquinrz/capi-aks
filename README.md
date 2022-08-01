@@ -189,6 +189,7 @@ export CLUSTER_NAME=$CLUSTER_LOCATION-$CLUSTER_PREFIX-aks
 clusterctl describe cluster $CLUSTER_NAME
 
 # Generate kubeconfig for cluster
+mkdir -p kubeconfig
 clusterctl get kubeconfig $CLUSTER_NAME  > kubeconfig/$CLUSTER_NAME.kubeconfig
 
 # Check worker cluster nodes
