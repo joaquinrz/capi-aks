@@ -201,9 +201,9 @@ kubectl --kubeconfig=kubeconfig/$CLUSTER_NAME.kubeconfig get nodes
 Removing a worker cluster is as simple as deleting the cluster HelmRelease file under deploy/management/clusters and applying a flux reconcile
 
 ```bash
-rm deploy/management/clusters/<clusterName>.yaml
+rm deploy/clusters/<clusterName>.yaml
 
-git add deploy/management/clusters/<clusterName>.yaml
+git add deploy/clusters/<clusterName>.yaml
 
 git commit -m 'Removed cluster'
 
