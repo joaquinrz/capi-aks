@@ -10,7 +10,7 @@ usage() {
     "
 }
 
-DEPLOY_DIR="deploy/management/clusters"
+DEPLOY_DIR="deploy/clusters"
 
 while [ $# -gt 0 ]; do
     opt="$1" value="$2"
