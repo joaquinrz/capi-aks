@@ -35,10 +35,9 @@ spec:
   subscriptionID: {{ .Values.subscriptionId }}
   version: {{ .Values.k8sVersion }}
   networkPlugin: {{ .Values.networkPlugin }}
-  networkPolicy: {{ .Values.networkPolicy }}
-  virtualNetwork:
-    name: {{ .Values.virtualNetwork.name }}
-    cidrBlock: 10.0.0.0/8
+  # virtualNetwork:
+  #   name: {{ .Values.virtualNetwork.name }}
+  #   cidrBlock: 10.0.0.0/8
 
 ---
 # Due to the nature of managed Kubernetes and the control plane implementation,

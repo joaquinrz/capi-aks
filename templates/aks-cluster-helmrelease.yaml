@@ -13,9 +13,9 @@ spec:
         namespace: flux-system
   interval: 5m
   values:
-    name: $CLUSTER_LOCATION-$CLUSTER_NAME-aks
+    name: aks-$CLUSTER_LOCATION-$CLUSTER_NAME
     subscriptionId: $AZURE_SUBSCRIPTION_ID
-    clusterResourceGroup: capi-aks-clusters
+    clusterResourceGroup: $WORKER_CLUSTERS_RG
     controlAgentPoolName: ca$CLUSTER_NAME
     workerAgentPoolName:  wa$CLUSTER_NAME
     location: $CLUSTER_LOCATION
