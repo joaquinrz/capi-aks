@@ -217,7 +217,7 @@ Now that the management cluster has been initialized with CAPI and Flux, let us 
 watch kubectl get pods -n capz-system
 
 # Set Cluster prefix and location
-export CLUSTER_PREFIX=cluster10
+export CLUSTER_PREFIX=cluster01
 export CLUSTER_LOCATION=southcentralus
 export WORKER_CLUSTERS_RG=capi-aks-clusters
 
