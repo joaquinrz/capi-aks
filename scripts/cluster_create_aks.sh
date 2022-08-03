@@ -10,7 +10,7 @@ usage() {
     "
 }
 
-DEPLOY_DIR="deploy/management/clusters"
+DEPLOY_DIR="deploy/clusters"
 
 while [ $# -gt 0 ]; do
     opt="$1" value="$2"
@@ -35,18 +35,15 @@ done
 echo "Creating HelmRelease for worker cluster $CLUSTER_NAME in $CLUSTER_LOCATION ..."
 
 mkdir -p $DEPLOY_DIR
-CLUSTER_NAME=$CLUSTER_NAME CLUSTER_LOCATION=$CLUSTER_LOCATION envsubst < templates/aks-cluster-helmrelease.yaml > "$DEPLOY_DIR"/"$CLUSTER_NAME"-"$CLUSTER_LOCATION".yaml
+CLUSTER_NAME=$CLUSTER_NAME CLUSTER_LOCATION=$CLUSTER_LOCATION envsubst < templates/aks-cluster-helmrelease.yaml > "$DEPLOY_DIR"/"aks-$CLUSTER_LOCATION-$CLUSTER_PREFIX.yaml"
 
 echo "Pushing HelmRelease to upstream ..."
 
-git add "$DEPLOY_DIR"/"$CLUSTER_NAME"-"$CLUSTER_LOCATION".yaml
+git add "$DEPLOY_DIR"/"aks-$CLUSTER_LOCATION-$CLUSTER_PREFIX.yaml"
 git commit -m "Added cluster $CLUSTER_NAME"
 git push
 
 echo "Flux Reconcile..."
-
+sleep 2
 flux reconcile kustomization flux-system --with-source
-sleep 5
-flux reconcile kustomization clusters
-
 echo "All Done."

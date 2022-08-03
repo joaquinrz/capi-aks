@@ -1,6 +1,6 @@
 # AKS Multi-Cluster Fleet using Cluster API + Flux
 
-> Setup a Kubernetes Multi-cluster fleet using Cluster API and Azure
+> Setup a Kubernetes Multi-cluster fleet using Cluster API and CAPZ
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 
@@ -14,8 +14,7 @@ The following is a sample implementation using Codespaces for setting up an Azur
 
 - Click the `Code` button on this repo
 - Click the `Codespaces` tab
-- Click `New Codespace`
-- Choose the `4 core` option
+- Click `Create codespace on main`
 
 ![Create Codespace](./images/OpenWithCodespaces.jpg)
 
@@ -51,7 +50,7 @@ az account set --subscription $AZURE_SUBSCRIPTION_ID
 
 ## Create the Azure Kubernetes Service (AKS) Cluster
 
-To get started, you will need to create an AKS cluster that will manage the lifecycle of all your fleet clusters. The following instructions will guide you on how to deploy the AKS cluster.
+To get started, you will need to create an AKS cluster that will manage the lifecycle of all your fleet clusters. For this setup we will be creating a vanilla AKS cluster with the Bring Your Own CNI (BYOCNI) feature enabled. This will help us install Cilium CNI.
 
 ```bash
 # Set the name of your new resource group in Azure.
@@ -64,24 +63,47 @@ az group list -o table | grep $AZURE_RG_NAME
 # Create the new resource group
 az group create -n $AZURE_RG_NAME -l $AZURE_LOCATION
 
-# Create the AKS Cluster (this will take around 5 to 10 minutes)
-az aks create -g $AZURE_RG_NAME -n capi-management --node-count 1 --generate-ssh-keys
+# Set name for management cluster
+export AZURE_MGT_CLUSTER_NAME=capi-management
+
+# Create the AKS Cluster with no CNI (this will take 5 to 10 minutes)
+az aks create -g $AZURE_RG_NAME \
+  -n $AZURE_MGT_CLUSTER_NAME \
+  --node-count 1 \
+  --generate-ssh-keys \
+  --network-plugin none
 
 # Connect to the AKS cluster
-az aks get-credentials --resource-group $AZURE_RG_NAME --name capi-management
+az aks get-credentials --resource-group $AZURE_RG_NAME --name $AZURE_MGT_CLUSTER_NAME
 
-# Verify AKS node is ready
+# Verify AKS node
 kubectl get nodes
 
-# You should be able to see the nodepool to be in Ready state
+# You will see the nodepool is in NotReady state, this is expected since there is no CNI installed.
 
 # NAME                                STATUS   ROLES   AGE     VERSION
-# aks-nodepool1-34273201-vmss000000   Ready    agent   4m15s   v1.22.11
+# aks-nodepool1-34273201-vmss000000   NotReady agent   2m15s   v1.22.11
+```
+
+## Install Cilium CNI on Management Cluster
+
+For the Nodepools to be in Ready state, a Container Network Interface(CNI) must be installed. The `cilum` cli has already been pre-installed in this codespace.
+
+```bash
+cilium install --azure-resource-group $AZURE_RG_NAME
+
+# Verify AKS node
+kubectl get nodes
+
+# You will see the nodepool is now Ready
+
+# NAME                                STATUS   ROLES   AGE     VERSION
+# aks-nodepool1-34273201-vmss000000   Ready    agent   6m4s    v1.22.11
 ```
 
 ## Initialize the Management Cluster with Cluster API
 
-Now that the AKS cluster is created, it will be initialized with Cluster API to become the management cluster. The management cluster allows you to control and maintain the fleet of worker clusters
+Now that the AKS cluster is created with Cilium, it needs to be initialized with Cluster API to become the management cluster. The management cluster allows you to control and maintain the fleet of worker clusters
 
 ```bash
 
@@ -90,8 +112,14 @@ export CLUSTER_TOPOLOGY=true
 export EXP_AKS=true
 export EXP_MACHINE_POOL=true
 
-# Create an Azure Service Principal in the Azure portal. (Note: Make sure this Service Principal has access to the resource group)
-# TODO: Automate the service principal creation using the Azure CLI
+# TODO : Create an Azure Service Principal in the Azure portal. (Note: Make sure this Service Principal has access to the resource group)
+# # Create an Azure Service Principal
+# export AZURE_SP_NAME="<ServicePrincipalName>"
+
+# az ad sp create-for-rbac \
+#   --name $AZURE_SP_NAME \
+#   --role contributor \
+#   --scopes="/subscriptions/${AZURE_SUBSCRIPTION_ID}"
 
 export AZURE_TENANT_ID="<Tenant>"
 export AZURE_CLIENT_ID="<AppId>"
@@ -168,31 +196,56 @@ flux reconcile source git flux-system
 flux reconcile kustomization flux-system
 ```
 
+## Enable BYOCNI Support for Managmenet Cluster
+
+```bash
+# Install Custom CRD for Azure Managed Control Planes (--network-plugin none)
+kubectl apply -f byocni/manifests/infrastructure.cluster.x-k8s.io_azuremanagedcontrolplanes.yaml
+
+# Update CAPZ deployment image for a custom forked image that supports BYONCI
+kubectl set image deployment/capz-controller-manager \
+  manager=ghcr.io/joaquinrz/cluster-api-azure-controller:beta \
+  -n capz-system
+```
+
 ## Deploy worker cluster using Cluster API and Flux v2
 
 Now that the management cluster has been initialized with CAPI and Flux, let us generate a few cluster crds using our helper script.
 
 ```bash
+# Wait for new capz-controller manager to be ready
+watch kubectl get pods -n capz-system
+
 # Set Cluster prefix and location
-export CLUSTER_PREFIX=cluster01
+export CLUSTER_PREFIX=cluster10
 export CLUSTER_LOCATION=southcentralus
+export WORKER_CLUSTERS_RG=capi-aks-clusters
 
 # This script will generate a new HelmRelease file under deploy/management/clusters. This file will then be reconciled by Flux and deploy a new worker cluster.
-./scripts/cluster_create.sh -n $CLUSTER_PREFIX -l $CLUSTER_LOCATION
+./scripts/cluster_create_aks.sh -n $CLUSTER_PREFIX -l $CLUSTER_LOCATION
 
-# Note: It takes about 6 minutes for the cluster to be provisioned, you may check the status of the deployment by running
-kubectl get clusters
+export CLUSTER_NAME=aks-$CLUSTER_LOCATION-$CLUSTER_PREFIX
 
-export CLUSTER_NAME=$CLUSTER_LOCATION-$CLUSTER_PREFIX-aks
-
-# Shows a hierachical view of dependencies
-clusterctl describe cluster $CLUSTER_NAME
+# Wait for the cluster to be provisioned (this takes around 6 minutes)
+watch kubectl get clusters
 
 # Generate kubeconfig for cluster
+mkdir -p kubeconfig
 clusterctl get kubeconfig $CLUSTER_NAME  > kubeconfig/$CLUSTER_NAME.kubeconfig
 
 # Check worker cluster nodes
-kubectl --kubeconfig=kubeconfig/$CLUSTER_NAME.kubeconfig get nodes
+KUBECONFIG=kubeconfig/$CLUSTER_NAME.kubeconfig kubectl get nodes
+
+#Install Cilium
+KUBECONFIG=kubeconfig/$CLUSTER_NAME.kubeconfig \
+  cilium install \
+  --azure-resource-group $WORKER_CLUSTERS_RG
+
+# Verify Cilium installation
+KUBECONFIG=kubeconfig/$CLUSTER_NAME.kubeconfig kubectl get nodes
+
+KUBECONFIG=kubeconfig/$CLUSTER_NAME.kubeconfig cilium status
+
 ```
 
 ## Deleting a worker cluster
@@ -200,17 +253,17 @@ kubectl --kubeconfig=kubeconfig/$CLUSTER_NAME.kubeconfig get nodes
 Removing a worker cluster is as simple as deleting the cluster HelmRelease file under deploy/management/clusters and applying a flux reconcile
 
 ```bash
-rm deploy/management/clusters/<clusterName>.yaml
+export CLUSTER_NAME=aks-southcentralus-cluster01
+rm deploy/clusters/$CLUSTER_NAME.yaml
+rm kubeconfig/$CLUSTER_NAME.kubeconfig
 
-git add deploy/management/clusters/<clusterName>.yaml
+git add deploy/clusters/$CLUSTER_NAME.yaml
 
-git commit -m 'Removed cluster'
+git commit -m "Removed cluster $CLUSTER_NAME"
 
 git push
 
 flux reconcile kustomization flux-system --with-source
-
-flux reconcile kustomization clusters
 
 kubectl get clusters # You will see now that the cluster is being deleted
 ```
