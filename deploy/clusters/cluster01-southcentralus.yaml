@@ -1,0 +1,23 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: cluster01-aks-helm-release
+  namespace: default
+spec:
+  chart:
+    spec:
+      chart: ./capi/charts/aks
+      sourceRef:
+        kind: GitRepository
+        name: flux-system
+        namespace: flux-system
+  interval: 5m
+  values:
+    name: southcentralus-cluster01-aks
+    subscriptionId: 08deddba-0366-4dd8-81f9-c37b7b44f7ce
+    clusterResourceGroup: capi-aks-clusters
+    controlAgentPoolName: cacluster01
+    workerAgentPoolName:  wacluster01
+    location: southcentralus
+    virtualNetwork:
+      name: cluster01-vnet
