@@ -158,7 +158,7 @@ flux install
 # Verify Flux install
 flux check
 
-# For flux to work, you will need to create a personal access token (PAT) that has repo read access
+# For flux to work, you will need to create a personal access token (PAT) that has repo write access
 export GIT_PAT=<yourGitPat>
 export GIT_BRANCH=`git config user.name | sed 's/ //g'`$RANDOM
 export GIT_REPO=`git config remote.origin.url`
@@ -230,6 +230,7 @@ export CLUSTER_NAME=aks-$CLUSTER_LOCATION-$CLUSTER_PREFIX
 watch kubectl get clusters
 
 # Generate kubeconfig for cluster
+mkdir -p kubeconfig
 mkdir -p kubeconfig
 clusterctl get kubeconfig $CLUSTER_NAME  > kubeconfig/$CLUSTER_NAME.kubeconfig
 
