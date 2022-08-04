@@ -48,7 +48,7 @@ az login --use-device-code
 az account set --subscription $AZURE_SUBSCRIPTION_ID
 ```
 
-## Create the Azure Kubernetes Service (AKS) Cluster
+## Create the Management Cluster using Azure Kubernetes Service (AKS)
 
 To get started, you will need to create an AKS cluster that will manage the lifecycle of all your fleet clusters. For this setup we will be creating a vanilla AKS cluster with the Bring Your Own CNI (BYOCNI) feature enabled. This will help us install Cilium CNI.
 
