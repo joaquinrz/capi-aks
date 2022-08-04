@@ -192,8 +192,8 @@ git push
 
 # Force Flux reconcile
 flux reconcile source git flux-system
+flux reconcile kustomization flux-system --with-source
 
-flux reconcile kustomization flux-system
 ```
 
 ## Enable BYOCNI Support for Managmenet Cluster
@@ -206,6 +206,10 @@ kubectl apply -f byocni/manifests/infrastructure.cluster.x-k8s.io_azuremanagedco
 kubectl set image deployment/capz-controller-manager \
   manager=ghcr.io/joaquinrz/cluster-api-azure-controller:beta \
   -n capz-system
+
+# Wait for new capz-controller manager to be ready
+watch kubectl get pods -n capz-system
+
 ```
 
 ## Deploy worker cluster using Cluster API and Flux v2
@@ -213,9 +217,6 @@ kubectl set image deployment/capz-controller-manager \
 Now that the management cluster has been initialized with CAPI and Flux, let us generate a few cluster crds using our helper script.
 
 ```bash
-# Wait for new capz-controller manager to be ready
-watch kubectl get pods -n capz-system
-
 # Set Cluster prefix and location
 export CLUSTER_PREFIX=cluster01
 export CLUSTER_LOCATION=southcentralus
@@ -230,7 +231,6 @@ export CLUSTER_NAME=aks-$CLUSTER_LOCATION-$CLUSTER_PREFIX
 watch kubectl get clusters
 
 # Generate kubeconfig for cluster
-mkdir -p kubeconfig
 mkdir -p kubeconfig
 clusterctl get kubeconfig $CLUSTER_NAME  > kubeconfig/$CLUSTER_NAME.kubeconfig
 
